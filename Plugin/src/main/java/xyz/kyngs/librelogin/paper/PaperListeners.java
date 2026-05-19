@@ -207,8 +207,6 @@ public class PaperListeners extends AuthenticListeners<PaperLibreLogin, Player, 
                     && !isLimbo.apply(eventSpawnLocation.getWorld())
                     && isLimbo.apply(world.value())) {
                 spawnLocationCache.put(puuid, eventSpawnLocation);
-            } else {
-                return;
             }
 
             var loc = world.value().getSpawnLocation();
