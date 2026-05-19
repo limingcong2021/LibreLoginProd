@@ -50,8 +50,8 @@ alt="Contributors listed"></img>
 - Geyser (Bedrock) support using [Floodgate](https://github.com/Navio1430/LibreLoginProd/wiki/Floodgate)
 
 ## Platforms ⚙️
-- [✔️] Velocity - up to 1.21.11
-- [✔️] Paper - up to 1.21.11
+- [✔️] Velocity - up to 1.26.2
+- [✔️] Paper - up to 1.26.2
 - [❌] BungeeCord - no longer supported, do not use it for production
 
 ## Main changes 
