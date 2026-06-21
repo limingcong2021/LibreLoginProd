@@ -106,7 +106,7 @@ public class PaperListeners extends AuthenticListeners<PaperLibreLogin, Player, 
         GeneralUtil.runAsync(() -> onPlayerDisconnect(event.getPlayer()));
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         var location = joinedWhileDead.getIfPresent(event.getPlayer().getUniqueId());
         if (location == null) {
@@ -118,11 +118,6 @@ public class PaperListeners extends AuthenticListeners<PaperLibreLogin, Player, 
         }
 
         event.setRespawnLocation(location);
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPostLogin(PlayerLoginEvent event) {
-        ipCache.put(event.getPlayer().getUniqueId(), event.getAddress().getHostAddress());
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -147,6 +142,11 @@ public class PaperListeners extends AuthenticListeners<PaperLibreLogin, Player, 
         onPostLogin(player, data);
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPostLogin(PlayerLoginEvent event) {
+        ipCache.put(event.getPlayer().getUniqueId(), event.getAddress().getHostAddress());
+    }
+
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
         if (plugin.fromFloodgate(event.getName())) return;
@@ -162,7 +162,7 @@ public class PaperListeners extends AuthenticListeners<PaperLibreLogin, Player, 
 
     // Changed to an async variant of this event
     // cuz the previous one is deprecated and causes a bug (Issue #52)
-    @SuppressWarnings("UnstableApiUsage") // let me
+    @SuppressWarnings("UnstableApiUsage")
     @EventHandler(priority = EventPriority.HIGHEST)
     public void chooseWorld(AsyncPlayerSpawnLocationEvent event) {
         var puuid = event.getConnection().getProfile().getId();
@@ -181,8 +181,9 @@ public class PaperListeners extends AuthenticListeners<PaperLibreLogin, Player, 
             return;
         }
 
-        var world = chooseServer(puuid, ip, readOnlyUserCache.getIfPresent(puuid));
         ipCache.invalidate(puuid);
+
+        var world = chooseServer(puuid, ip, readOnlyUserCache.getIfPresent(puuid));
         if (world.value() == null) {
             Bukkit.getScheduler()
                     .runTask(
@@ -196,23 +197,30 @@ public class PaperListeners extends AuthenticListeners<PaperLibreLogin, Player, 
                                                                             + (world.key()
                                                                                     ? "lobby"
                                                                                     : "limbo"))));
-        } else {
-            Function<World, Boolean> isLimbo =
-                    (w) ->
-                            plugin.getConfiguration()
-                                    .get(ConfigurationKeys.LIMBO)
-                                    .contains(w.getName());
-            Location eventSpawnLocation = event.getSpawnLocation();
-            if (!event.isNewPlayer()
-                    && !isLimbo.apply(eventSpawnLocation.getWorld())
-                    && isLimbo.apply(world.value())) {
-                spawnLocationCache.put(puuid, eventSpawnLocation);
-            }
-
-            var loc = world.value().getSpawnLocation();
-            joinedWhileDead.put(puuid, loc);
-            event.setSpawnLocation(loc);
+            return;
         }
+
+        Function<World, Boolean> isLimbo =
+                (w) -> plugin.getConfiguration().get(ConfigurationKeys.LIMBO).contains(w.getName());
+
+        World choosenWorld = world.value();
+        Location eventSpawnLocation = event.getSpawnLocation();
+        boolean isAuthenticated = world.key();
+
+        if (!event.isNewPlayer()
+                && !isLimbo.apply(eventSpawnLocation.getWorld())
+                && isLimbo.apply(choosenWorld)) {
+            spawnLocationCache.put(puuid, eventSpawnLocation);
+        }
+
+        if (isAuthenticated && !isLimbo.apply(choosenWorld)) {
+            joinedWhileDead.invalidate(puuid);
+            return;
+        }
+
+        var loc = choosenWorld.getSpawnLocation();
+        joinedWhileDead.put(puuid, loc);
+        event.setSpawnLocation(loc);
     }
 
     /* Commented out when migrating to PacketEvents

@@ -365,6 +365,10 @@ public class AuthenticListeners<Plugin extends AuthenticLibreLogin<P, S>, P, S> 
                 user);
     }
 
+    /**
+     * @return A BiHolder where the key is true if the player is authenticated, and the value is the
+     *     server to send them to.
+     */
     protected BiHolder<Boolean, S> chooseServer(
             UUID uuid, @NotNull String ip, @Nullable User user) {
         var fromFloodgate = plugin.fromFloodgate(uuid);
