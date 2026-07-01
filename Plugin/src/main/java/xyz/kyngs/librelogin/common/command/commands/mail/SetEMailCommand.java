@@ -38,6 +38,10 @@ public class SetEMailCommand<P> extends EMailCommand<P> {
                 () -> {
                     var user = getUser(player);
 
+                    if (!user.isRegistered()) {
+                        throw new InvalidCommandArgument(getMessage("error-not-registered"));
+                    }
+
                     var hashed = user.getHashedPassword();
                     var crypto = getCrypto(hashed);
 

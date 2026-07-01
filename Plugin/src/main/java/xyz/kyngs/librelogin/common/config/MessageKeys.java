@@ -1309,4 +1309,78 @@ This section contains autocompletes for commands. It is pretty large, so most pe
                     "This hint is displayed when the player starts typing the /confirmpasswordreset"
                             + " command.",
                     ConfigurateHelper::getString);
+
+    /*
+    Email verification required messages
+     */
+
+    public static final ConfigurationKey<String> PROMPT_EMAIL_VERIFY =
+            new ConfigurationKey<>(
+                    "prompt-email-verify",
+                    "Please verify your email! Use: &e/setemail &b<email> <password>",
+                    "This message is displayed when the player is prompted to verify their email.",
+                    ConfigurateHelper::getString);
+
+    public static final ConfigurationKey<String> PROMPT_EMAIL_CONFIRM =
+            new ConfigurationKey<>(
+                    "prompt-email-confirm",
+                    "Please check your email for verification code! Use: &e/verifyemail &b<code>",
+                    "This message is displayed when the player is awaiting email verification.",
+                    ConfigurateHelper::getString);
+
+    public static final ConfigurationKey<String> ERROR_EMAIL_NOT_VERIFIED =
+            new ConfigurationKey<>(
+                    "error-email-not-verified",
+                    "You must verify your email address before logging in! Use /setemail <email> <password> to set up email verification.",
+                    "This message is displayed when the player tries to login without verifying their email.",
+                    ConfigurateHelper::getString);
+
+    public static final ConfigurationKey<String> TITLE_EMAIL_VERIFY =
+            new ConfigurationKey<>(
+                    "title-email-verify",
+                    "&6&lVerify Email",
+                    "This title is displayed when the player is prompted to verify their email.",
+                    ConfigurateHelper::getString);
+
+    public static final ConfigurationKey<String> TITLE_EMAIL_CONFIRM =
+            new ConfigurationKey<>(
+                    "title-email-confirm",
+                    "&6&lCheck Email",
+                    "This title is displayed when the player is awaiting email verification code.",
+                    ConfigurateHelper::getString);
+
+    public static final ConfigurationKey<String> SUB_TITLE_EMAIL_VERIFY =
+            new ConfigurationKey<>(
+                    "sub-title-email-verify",
+                    "&e/setemail &b<email> <password>",
+                    "This subtitle is displayed when the player is prompted to verify their email.",
+                    ConfigurateHelper::getString);
+
+    public static final ConfigurationKey<String> SUB_TITLE_EMAIL_CONFIRM =
+            new ConfigurationKey<>(
+                    "sub-title-email-confirm",
+                    "&e/verifyemail &b<code>",
+                    "This subtitle is displayed when the player is awaiting email verification code.",
+                    ConfigurateHelper::getString);
+
+    public static final ConfigurationKey<String> ACTION_BAR_EMAIL_VERIFY =
+            new ConfigurationKey<>(
+                    "action-bar-email-verify",
+                    "&e/setemail &b<email> <password>",
+                    "This actionbar is displayed when the player is prompted to verify their email.",
+                    ConfigurateHelper::getString);
+
+    public static final ConfigurationKey<String> ACTION_BAR_EMAIL_CONFIRM =
+            new ConfigurationKey<>(
+                    "action-bar-email-confirm",
+                    "&e/verifyemail &b<code>",
+                    "This actionbar is displayed when the player is awaiting email verification code.",
+                    ConfigurateHelper::getString);
+
+    public static final ConfigurationKey<String> INFO_REGISTERED_EMAIL_REQUIRED =
+            new ConfigurationKey<>(
+                    "info-registered-email-required",
+                    "Registered! Please verify your email to complete registration.",
+                    "This message is displayed when the player registers and email verification is required.",
+                    ConfigurateHelper::getString);
 }

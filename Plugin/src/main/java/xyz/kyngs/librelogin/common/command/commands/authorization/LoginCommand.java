@@ -13,6 +13,7 @@ import xyz.kyngs.librelogin.api.event.events.AuthenticatedEvent;
 import xyz.kyngs.librelogin.api.event.events.WrongPasswordEvent.AuthenticationSource;
 import xyz.kyngs.librelogin.common.AuthenticLibreLogin;
 import xyz.kyngs.librelogin.common.command.InvalidCommandArgument;
+import xyz.kyngs.librelogin.common.config.ConfigurationKeys;
 import xyz.kyngs.librelogin.common.event.events.AuthenticWrongPasswordEvent;
 
 @CommandAlias("login|l|log")
@@ -50,6 +51,11 @@ public class LoginCommand<P> extends AuthorizationCommand<P> {
                                         new AuthenticWrongPasswordEvent<>(
                                                 user, player, plugin, AuthenticationSource.LOGIN));
                         throw new InvalidCommandArgument(getMessage("error-password-wrong"));
+                    }
+
+                    var requireEmail = plugin.getConfiguration().get(ConfigurationKeys.MAIL_REQUIRED_ON_REGISTER);
+                    if (requireEmail && user.getEmail() == null) {
+                        throw new InvalidCommandArgument(getMessage("error-email-not-verified"));
                     }
 
                     var secret = user.getSecret();

@@ -12,6 +12,7 @@ import net.kyori.adventure.audience.Audience;
 import xyz.kyngs.librelogin.api.event.events.AuthenticatedEvent;
 import xyz.kyngs.librelogin.common.AuthenticLibreLogin;
 import xyz.kyngs.librelogin.common.command.InvalidCommandArgument;
+import xyz.kyngs.librelogin.common.config.ConfigurationKeys;
 
 @CommandAlias("register|reg")
 public class RegisterCommand<P> extends AuthorizationCommand<P> {
@@ -36,12 +37,20 @@ public class RegisterCommand<P> extends AuthorizationCommand<P> {
 
                     setPassword(sender, user, password, "info-registering");
 
-                    if (!getMessages().isEmpty("info-registered"))
-                        sender.sendMessage(getMessage("info-registered"));
+                    var requireEmail = plugin.getConfiguration().get(ConfigurationKeys.MAIL_REQUIRED_ON_REGISTER);
 
-                    getAuthorizationProvider()
-                            .authorize(
-                                    user, player, AuthenticatedEvent.AuthenticationReason.REGISTER);
+                    if (requireEmail) {
+                        if (!getMessages().isEmpty("info-registered-email-required"))
+                            sender.sendMessage(getMessage("info-registered-email-required"));
+                        getAuthorizationProvider().startEmailVerification(player);
+                    } else {
+                        if (!getMessages().isEmpty("info-registered"))
+                            sender.sendMessage(getMessage("info-registered"));
+
+                        getAuthorizationProvider()
+                                .authorize(
+                                        user, player, AuthenticatedEvent.AuthenticationReason.REGISTER);
+                    }
                 });
     }
 }

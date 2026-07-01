@@ -30,7 +30,9 @@ public class ConfigurationKeys {
                             "log",
                             "reg",
                             "resetpassword",
-                            "confirmpasswordreset"),
+                            "confirmpasswordreset",
+                            "setemail",
+                            "verifyemail"),
                     "Commands that are allowed while the user is not authorized.",
                     ConfigurateHelper::getStringList);
 
@@ -393,6 +395,15 @@ I heavily suggest you to read this wiki page: https://github.com/Navio1430/Libre
                     "email@something.com",
                     "The email to use as a sender in the From field.",
                     ConfigurateHelper::getString);
+
+    public static final ConfigurationKey<Boolean> MAIL_REQUIRED_ON_REGISTER =
+            new ConfigurationKey<>(
+                    "mail.required-on-register",
+                    false,
+                    "Should we require players to verify their email address before they can login? "
+                            + "When enabled, players must use /setemail <email> <password> after registering, "
+                            + "then /verifyemail <code> to complete the registration process.",
+                    ConfigurateHelper::getBoolean);
 
     private static final ConfigurationKey<?> MAIL =
             ConfigurationKey.getComment(

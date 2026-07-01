@@ -33,6 +33,7 @@ public class AuthenticAuthorizationProvider<P, S> extends AuthenticHandler<P, S>
 
     private final Map<P, Boolean> unAuthorized;
     private final Map<P, String> awaiting2FA;
+    private final Map<P, Boolean> awaitingEmailVerification;
     private final Cache<UUID, EmailVerifyData> emailConfirmCache;
     private final Cache<UUID, String> passwordResetCache;
 
@@ -40,6 +41,7 @@ public class AuthenticAuthorizationProvider<P, S> extends AuthenticHandler<P, S>
         super(plugin);
         unAuthorized = new ConcurrentHashMap<>();
         awaiting2FA = new ConcurrentHashMap<>();
+        awaitingEmailVerification = new ConcurrentHashMap<>();
 
         var millis =
                 plugin.getConfiguration()
@@ -67,8 +69,21 @@ public class AuthenticAuthorizationProvider<P, S> extends AuthenticHandler<P, S>
     public void onExit(P player) {
         stopTracking(player);
         awaiting2FA.remove(player);
+        awaitingEmailVerification.remove(player);
         emailConfirmCache.invalidate(platformHandle.getUUIDForPlayer(player));
         passwordResetCache.invalidate(platformHandle.getUUIDForPlayer(player));
+    }
+
+    public boolean isAwaitingEmailVerification(P player) {
+        return awaitingEmailVerification.containsKey(player);
+    }
+
+    public void startEmailVerification(P player) {
+        awaitingEmailVerification.put(player, true);
+    }
+
+    public void completeEmailVerification(P player) {
+        awaitingEmailVerification.remove(player);
     }
 
     @Override
@@ -156,10 +171,27 @@ public class AuthenticAuthorizationProvider<P, S> extends AuthenticHandler<P, S>
                         return;
                     }
 
-                    sendActionBar(registered, audience);
+                    if (isAwaitingEmailVerification(player)) {
+                        sendEmailVerificationActionBar(player, audience);
+                    } else {
+                        sendActionBar(registered, audience);
+                    }
                 });
 
         wrong.forEach(unAuthorized::remove);
+    }
+
+    private void sendEmailVerificationActionBar(P player, Audience audience) {
+        if (!plugin.getConfiguration().get(ConfigurationKeys.USE_ACTION_BAR)) return;
+
+        var hasPendingVerification =
+                plugin.getAuthorizationProvider()
+                        .getEmailConfirmCache()
+                        .getIfPresent(platformHandle.getUUIDForPlayer(player)) != null;
+
+        audience.sendActionBar(
+                plugin.getMessages()
+                        .getMessage(hasPendingVerification ? "action-bar-email-confirm" : "action-bar-email-verify"));
     }
 
     private void sendActionBar(boolean registered, Audience audience) {
@@ -190,6 +222,39 @@ public class AuthenticAuthorizationProvider<P, S> extends AuthenticHandler<P, S>
                                 Duration.ofMillis(0))));
     }
 
+    public void sendEmailVerificationInfo(P player) {
+        var audience = platformHandle.getAudienceForPlayer(player);
+        if (audience == null) return;
+
+        var user = plugin.getDatabaseProvider().getByUUID(platformHandle.getUUIDForPlayer(player));
+        var hasPendingVerification =
+                plugin.getAuthorizationProvider()
+                        .getEmailConfirmCache()
+                        .getIfPresent(platformHandle.getUUIDForPlayer(player)) != null;
+
+        if (hasPendingVerification) {
+            audience.sendMessage(plugin.getMessages().getMessage("prompt-email-confirm"));
+        } else {
+            audience.sendMessage(plugin.getMessages().getMessage("prompt-email-verify"));
+        }
+
+        if (!plugin.getConfiguration().get(ConfigurationKeys.USE_TITLES)) return;
+        var toRefresh =
+                plugin.getConfiguration()
+                        .get(ConfigurationKeys.MILLISECONDS_TO_REFRESH_NOTIFICATION);
+        //noinspection UnstableApiUsage
+        audience.showTitle(
+                Title.title(
+                        plugin.getMessages()
+                                .getMessage(hasPendingVerification ? "title-email-confirm" : "title-email-verify"),
+                        plugin.getMessages()
+                                .getMessage(hasPendingVerification ? "sub-title-email-confirm" : "sub-title-email-verify"),
+                        Title.Times.of(
+                                Duration.ofMillis(0),
+                                Duration.ofMillis(toRefresh > 0 ? (long) (toRefresh * 1.1) : 10000),
+                                Duration.ofMillis(0))));
+    }
+
     public void stopTracking(P player) {
         unAuthorized.remove(player);
     }
@@ -205,7 +270,11 @@ public class AuthenticAuthorizationProvider<P, S> extends AuthenticHandler<P, S>
                         return;
                     }
 
-                    sendInfoMessage(registered, audience);
+                    if (isAwaitingEmailVerification(player)) {
+                        sendEmailVerificationInfo(player);
+                    } else {
+                        sendInfoMessage(registered, audience);
+                    }
                 });
 
         wrong.forEach(unAuthorized::remove);
